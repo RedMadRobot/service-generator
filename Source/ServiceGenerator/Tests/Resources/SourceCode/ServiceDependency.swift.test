@@ -1,0 +1,72 @@
+//
+//  ServiceDependency.swift
+//  GEN
+//
+//  Created by Code Generator
+//  Copyright (c) 2017 RedMadRobot LLC. All rights reserved.
+//
+
+
+import Foundation
+import HTTPTransport
+
+
+/**
+ Working & completion queues, base URL, security preferences and request retrier.
+ */
+class ServiceDependency {
+
+    /**
+     Background working queue.
+     */
+    let operationQueue:       OperationQueue
+
+    /**
+     Main queue for callbacks.
+     */
+    let completionQueue:      OperationQueue
+
+    /**
+     API session.
+     */
+    let session:              Session
+
+    /**
+     Validate via Alamofire.
+     */
+    let useDefaultValidation: Bool
+
+    /**
+     Initializer.
+     */
+    init(
+        operationQueue:       OperationQueue        = OperationQueue(),
+        completionQueue:      OperationQueue        = OperationQueue.main,
+        security:             Security              = Security.noEvaluation,
+        retrier:              HTTPTransportRetrier? = nil,
+        useDefaultValidation: Bool                  = true
+    ) {
+        self.operationQueue = operationQueue
+        self.completionQueue = completionQueue
+        self.session = Session(security: security, retrier: retrier)
+        self.useDefaultValidation = useDefaultValidation
+    }
+
+    /**
+     Initializer.
+
+     Shared API session might be applied.
+     */
+    init(
+        operationQueue:       OperationQueue        = OperationQueue(),
+        completionQueue:      OperationQueue        = OperationQueue.main,
+        session:              Session,
+        useDefaultValidation: Bool                  = true
+    ) {
+        self.operationQueue = operationQueue
+        self.completionQueue = completionQueue
+        self.session = session
+        self.useDefaultValidation = useDefaultValidation
+    }
+
+}

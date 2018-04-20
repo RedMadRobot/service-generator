@@ -1,0 +1,70 @@
+//
+//  EntityService.swift
+//  GEN
+//
+//  Created by Jeorge Taflanidi on 5/3/29 H.
+//  Copyright © 29 Heisei RedMadRobot LLC. All rights reserved.
+//
+
+
+import Foundation
+
+
+/**
+ Manage Entities.
+
+ @url http://server.com/api/entities
+ @add_cookies
+ @receive_cookies
+ */
+protocol EntityService {
+
+    /**
+     Get all entities paginated.
+
+     @auto_login
+     @post
+     @url /paginated/{request_id}
+     */
+    func getEntities(
+        requestIdentifier: String, // @url request_id
+        searchQuery: String?,      // @query search
+        dateToken: Double,         // @json date_token
+        deviceOS: String           // @header X-Att-Deviceos
+    ) -> AuthorizedServiceCall<[Entity]>
+
+    /**
+     Establish session.
+
+     @post
+     */
+    func authorize(
+        login: String,      // @json
+        password: String    // @json
+    ) -> ServiceCall<Void>
+
+    /**
+     Get entity by ID.
+
+     @get
+     @url /{id}
+     @parser EntityParserSPECIAL
+     */
+    func getEntity(
+        entityId id: String // @url
+    ) -> ServiceCall<Entity>
+
+    /**
+    Get entity by ID with interceptors.
+
+    @get
+    @url /{id}
+    @parser EntityParserSPECIAL
+    @requestInterceptor EntityRequestInterceptorSPECIAL
+    @responseInterceptor EntityResponseInterceptorSPECIAL
+    */
+    func getEntityWithInterceptors(
+        entityId id: String // @url
+    ) -> ServiceCall<Entity>
+
+}

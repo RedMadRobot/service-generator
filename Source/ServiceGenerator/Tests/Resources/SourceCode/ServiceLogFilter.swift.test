@@ -1,0 +1,54 @@
+//
+//  ServiceLogFilter.swift
+//  GEN
+//
+//  Created by Code Generator
+//  Copyright (c) 2017 RedMadRobot LLC. All rights reserved.
+//
+
+
+import Foundation
+import HTTPTransport
+
+
+/**
+ HTTP requests' log filtering.
+ */
+class ServiceLogFilter {
+
+    /**
+     Requests' log level.
+     */
+    var requestLogLevel:            LogRequestInterceptor.LogLevel
+
+    /**
+     Responses' log level.
+     */
+    var responseLogLevel:           LogResponseInterceptor.LogLevel
+
+    /**
+     Enable filtering log of received headers.
+     */
+    var isFilteringResponseHeaders: Bool
+
+    /**
+     Filter for log of received headers.
+     */
+    var responseHeaderFilter:       [LogResponseInterceptor.Header]
+
+    /**
+     Initializer.
+     */
+    init(
+        requestLogLevel:            LogRequestInterceptor.LogLevel  = .url,
+        responseLogLevel:           LogResponseInterceptor.LogLevel = .status,
+        isFilteringResponseHeaders: Bool                            = true,
+        responseHeaderFilter:       [LogResponseInterceptor.Header] = [.contentType, .setCookie, .lastModified]
+    ) {
+        self.requestLogLevel = requestLogLevel
+        self.responseLogLevel = responseLogLevel
+        self.isFilteringResponseHeaders = isFilteringResponseHeaders
+        self.responseHeaderFilter = responseHeaderFilter
+    }
+
+}

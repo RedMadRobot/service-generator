@@ -1,0 +1,140 @@
+//
+//  AuthorizedServiceCall.swift
+//  GEN
+//
+//  Created by Code Generator
+//  Copyright (c) 2017 RedMadRobot LLC. All rights reserved.
+//
+
+
+import Foundation
+
+
+/**
+ Fail-safe ```ServiceCall``` for cases, when the call might need to be authorized.
+
+ @ignore
+ */
+class AuthorizedServiceCall<Payload>: ServiceCall<Payload> {
+
+    /**
+     Entity to authorize the call or to check, whether the call failure was because of auth error.
+     */
+    let authorizer: Authorizing
+
+    /**
+     Initializer.
+
+     - Parameters:
+         - operationQueue: background queue, where wrapped service logic will be performed
+         - callbackQueue: completion callback queue
+         - authorizer: Entity to authorize the call or to check, whether the call failure was because of auth error
+         - main: closure, which wraps service method logic.
+     */
+    init(
+        operationQueue: OperationQueue,
+        callbackQueue: OperationQueue,
+        authorizer: Authorizing,
+        main: @escaping Main
+    ) {
+        self.authorizer = authorizer
+        super.init(operationQueue: operationQueue, callbackQueue: callbackQueue, main: main)
+    }
+
+    /**
+     Run authorized call synchronously.
+
+     If call fails because session is outdated, try to re-authorize, then call again.
+     */
+    override func invoke() -> ServiceCallResult<Payload> {
+        // initial invocation
+        let result: ServiceCallResult<Payload> = self.main()
+        if case ServiceCallResult<Payload>.failure(let error) = result {
+            // initial invocation finished with error
+            if self.authorizer.detectAuthError(error: error) {
+                // error is auth error
+                // trying to authorize
+                let authResult: ServiceCallResult<Void> = self.authorizer.authorize().invoke()
+                if case ServiceCallResult<Void>.failure(let error) = authResult {
+                    // auth failure, finishing
+                    let failure = ServiceCallResult<Payload>.failure(error: error)
+                    self.result = failure
+                    return failure
+                } else {
+                    // auth success, re-trying initial invocation
+                    return self.invoke()
+                }
+            } else {
+                // error is not auth error, finishing
+                self.result = result
+                return result
+            }
+        } else {
+            // initial invocation finished normally
+            self.result = result
+            self.postprocess(result: result)
+            return result
+        }
+    }
+
+    /**
+     Run authorized call in background.
+
+     If call fails because session is outdated, try to re-authorize, then call again.
+     */
+    override func operate(completion: @escaping Callback) {
+        self.operationQueue.addOperation {
+            // initial invocation
+            let result: ServiceCallResult<Payload> = self.main()
+            if case ServiceCallResult<Payload>.failure(let error) = result {
+                // initial invocation finished with error
+                if self.authorizer.detectAuthError(error: error) {
+                    // error is auth error
+                    // trying to authorize
+                    self.authorizer.authorize().operate { (authResult: ServiceCallResult<Void>) in
+                        if case ServiceCallResult<Void>.failure(let error) = authResult {
+                            // auth failure, finishing
+                            let failure = ServiceCallResult<Payload>.failure(error: error)
+                            self.result = failure
+                            self.callbackQueue.addOperation {
+                                completion(failure)
+                            }
+                        } else {
+                            // auth success, re-trying initial invocation
+                            self.operate(completion: completion)
+                        }
+                    }
+                } else {
+                    // error is not auth error, finishing
+                    self.callbackQueue.addOperation {
+                        completion(result)
+                    }
+                }
+            } else {
+                // initial invocation finished normally
+                self.result = result
+                self.postprocess(result: result)
+                self.callbackQueue.addOperation {
+                    completion(result)
+                }
+            }
+        }
+    }
+
+}
+
+/**
+ Entity to authorize the call or to check, whether the call failure was because of auth error.
+ */
+protocol Authorizing {
+
+    /**
+     Decide, whether ```ServiceCall``` failure was because of authorization error.
+     */
+    func detectAuthError(error: NSError) -> Bool
+
+    /**
+     Authorize call.
+     */
+    func authorize() -> ServiceCall<Void>
+}

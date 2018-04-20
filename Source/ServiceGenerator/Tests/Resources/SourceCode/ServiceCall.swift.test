@@ -1,0 +1,123 @@
+//
+//  ServiceCall.swift
+//  GEN
+//
+//  Created by Code Generator
+//  Copyright (c) 2017 RedMadRobot LLC. All rights reserved.
+//
+
+
+import Foundation
+
+
+/**
+ Wrapper over service method. Might be called synchronously or asynchronously.
+
+ @ignore
+ */
+class ServiceCall<Payload> {
+
+    /**
+     Signature for closure, which wraps service method logic.
+     */
+    typealias Main = () -> ServiceCallResult<Payload>
+
+    /**
+     Completion callback signature.
+     */
+    typealias Callback = (_ result: ServiceCallResult<Payload>) -> ()
+
+    /**
+     Signature for closure to handle `payload` in background before callback.
+     */
+    typealias PostProcess = (_ payload: Payload) -> ()
+
+    /**
+     Closure, which wraps service method logic.
+     */
+    let main: Main
+
+    /**
+     Background queue, where wrapped service logic will be performed.
+     */
+    let operationQueue: OperationQueue
+
+    /**
+     Completion callback queue.
+     */
+    let callbackQueue: OperationQueue
+
+    /**
+     Result.
+     */
+    var result: ServiceCallResult<Payload>?
+
+    var postprocess: PostProcess?
+
+    /**
+     Initializer.
+
+     - Parameters:
+         - operationQueue: background queue, where wrapped service logic will be performed
+         - callbackQueue: completion callback queue
+         - main: closure, which wraps service method logic.
+     */
+    init(
+        operationQueue: OperationQueue,
+        callbackQueue: OperationQueue,
+        main: @escaping Main
+    ) {
+        self.operationQueue = operationQueue
+        self.callbackQueue  = callbackQueue
+        self.main           = main
+    }
+
+    /**
+     Run synchronously.
+     */
+    func invoke() -> ServiceCallResult<Payload> {
+        let result: ServiceCallResult<Payload> = self.main()
+        self.result = result
+        self.postprocess(result: result)
+        return result
+    }
+
+    /**
+     Run in background.
+
+     - seealso: ```ServiceCall.operationQueue```
+     */
+    func operate(completion: @escaping Callback) {
+        self.operationQueue.addOperation {
+            let result: ServiceCallResult<Payload> = self.main()
+            self.result = result
+            self.postprocess(result: result)
+            self.callbackQueue.addOperation {
+                completion(result)
+            }
+        }
+    }
+
+    /**
+     Handle `payload` before completion callback.
+     */
+    func postprocess(process: @escaping PostProcess) -> Self {
+        self.postprocess = process
+        return self
+    }
+
+    func postprocess(result: ServiceCallResult<Payload>) {
+        if case ServiceCallResult.success(let payload) = result { self.postprocess?(payload) }
+    }
+
+}
+
+/**
+ Result, returned by ```ServiceCall```
+
+ - seealso: ```ServiceCall```
+ */
+enum ServiceCallResult<Payload> {
+    case success(payload: Payload)
+    case failure(error: NSError)
+}

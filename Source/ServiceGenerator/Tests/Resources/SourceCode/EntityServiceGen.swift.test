@@ -1,0 +1,226 @@
+//
+//  EntityServiceGen.swift
+//  GEN
+//
+//  Created by Code Generator
+//  Copyright (c) 2017 RedMadRobot LLC. All rights reserved.
+//
+
+import Foundation
+import CoreParser
+import HTTPTransport
+
+
+class EntityServiceGen: EntityService {
+
+    let baseURL:    String
+    let dependency: ServiceDependency
+    var logFilter:  ServiceLogFilter
+
+    let cookieProvider: CookieProviding
+    let cookieStorage: CookieStoring
+    let authorizer: Authorizing
+
+    var baseRequestInterceptors: [HTTPRequestInterceptor] {
+        return [
+            AddCookieInterceptor(cookieProvider: self.cookieProvider),
+            LogRequestInterceptor(logLevel: self.logFilter.requestLogLevel),
+        ]
+    }
+
+    var baseResponseInterceptors: [HTTPResponseInterceptor] {
+        return [
+            ReceivedCookieInterceptor(cookieStorage: self.cookieStorage),
+            LogResponseInterceptor(logLevel: self.logFilter.responseLogLevel, isFilteringHeaders: self.logFilter.isFilteringResponseHeaders, headerFilter: self.logFilter.responseHeaderFilter),
+        ]
+    }
+
+    var baseRequest: HTTPRequest { return HTTPRequest(endpoint: self.baseURL) }
+
+    var transport: HTTPTransport { return HTTPTransport(session: self.dependency.session, requestInterceptors: self.baseRequestInterceptors, responseInterceptors: self.baseResponseInterceptors, useDefaultValidation: self.dependency.useDefaultValidation) }
+
+    init(
+        dependency: ServiceDependency,
+        baseURL: String = "http://server.com/api/entities",
+        authorizer: Authorizing,
+        cookieProvider: CookieProviding,
+        cookieStorage: CookieStoring,
+        logFilter: ServiceLogFilter = ServiceLogFilter()
+    ) {
+        self.dependency = dependency
+        self.baseURL = baseURL
+        self.logFilter = logFilter
+        self.authorizer = authorizer
+        self.cookieProvider = cookieProvider
+        self.cookieStorage = cookieStorage
+    }
+
+    func createCall<Payload>(main: @escaping ServiceCall<Payload>.Main) -> ServiceCall<Payload> {
+        return ServiceCall(operationQueue: self.dependency.operationQueue, callbackQueue: self.dependency.completionQueue, main: main)
+    }
+
+    func createAuthorizedCall<Payload>(main: @escaping ServiceCall<Payload>.Main) -> ServiceCall<Payload> {
+        return AuthorizedServiceCall(operationQueue: self.dependency.operationQueue, callbackQueue: self.dependency.completionQueue, authorizer: authorizer, main: main)
+    }
+
+    func verify(response: HTTPResponse) -> NSError? { return nil }
+
+    func getEntities(requestIdentifier: String, searchQuery: String?, dateToken: Double, deviceOS: String) -> AuthorizedServiceCall<[Entity]> {
+        return self.createAuthorizedCall() { () -> ServiceCallResult<[Entity]> in
+            var headers:    [String: String]        = [:]
+            var parameters: [HTTPRequestParameters] = []
+            var requestInterceptors: [HTTPRequestInterceptor] = []
+            var responseInterceptors: [HTTPResponseInterceptor] = []
+
+            headers["X-Att-Deviceos"] = deviceOS
+
+            let queryParameters: HTTPRequestParameters = HTTPRequestParameters(parameters: [:], encoding: HTTPRequestParameters.Encoding.url)
+            if let searchQuery = searchQuery {
+                queryParameters["search"] = searchQuery
+            }
+            parameters.append(queryParameters)
+
+            let jsonParameters: HTTPRequestParameters = HTTPRequestParameters(parameters: [:], encoding: HTTPRequestParameters.Encoding.json)
+            jsonParameters["date_token"] = dateToken
+            parameters.append(jsonParameters)
+
+            let request: HTTPRequest =
+                HTTPRequest(
+                    httpMethod: HTTPRequest.HTTPMethod.post,
+                    endpoint: "/paginated/\(requestIdentifier)",
+                    headers: headers,
+                    parameters: parameters,
+                    requestInterceptors: requestInterceptors,
+                    responseInterceptors: responseInterceptors,
+                    base: self.baseRequest
+                )
+
+            switch self.transport.send(request: request) {
+                case .success(let response):
+                    if let error = self.verify(response: response) { return ServiceCallResult.failure(error: error) }
+
+                    do {
+                        let jsonObject: Any = try response.getJSON()!
+                        let payload = EntityParser().parse(jsonObject)
+                        return ServiceCallResult.success(payload: payload)
+                    } catch let error {
+                        return ServiceCallResult.failure(error: error as NSError)
+                    }
+
+                case .failure(let error):
+                    return ServiceCallResult.failure(error: error)
+            }
+        }
+    }
+
+    func authorize(login: String, password: String) -> ServiceCall<Void> {
+        return self.createCall() { () -> ServiceCallResult<Void> in
+            var headers:    [String: String]        = [:]
+            var parameters: [HTTPRequestParameters] = []
+            var requestInterceptors: [HTTPRequestInterceptor] = []
+            var responseInterceptors: [HTTPResponseInterceptor] = []
+
+            let jsonParameters: HTTPRequestParameters = HTTPRequestParameters(parameters: [:], encoding: HTTPRequestParameters.Encoding.json)
+            jsonParameters["login"] = login
+            jsonParameters["password"] = password
+            parameters.append(jsonParameters)
+
+            let request: HTTPRequest =
+                HTTPRequest(
+                    httpMethod: HTTPRequest.HTTPMethod.post,
+                    endpoint: "",
+                    headers: headers,
+                    parameters: parameters,
+                    requestInterceptors: requestInterceptors,
+                    responseInterceptors: responseInterceptors,
+                    base: self.baseRequest
+                )
+
+            switch self.transport.send(request: request) {
+                case .success(let response):
+                    if let error = self.verify(response: response) { return ServiceCallResult.failure(error: error) }
+                    return ServiceCallResult.success(payload: ())
+
+                case .failure(let error):
+                    return ServiceCallResult.failure(error: error)
+            }
+        }
+    }
+
+    func getEntity(entityId id: String) -> ServiceCall<Entity> {
+        return self.createCall() { () -> ServiceCallResult<Entity> in
+            var headers:    [String: String]        = [:]
+            var parameters: [HTTPRequestParameters] = []
+            var requestInterceptors: [HTTPRequestInterceptor] = []
+            var responseInterceptors: [HTTPResponseInterceptor] = []
+
+            let request: HTTPRequest =
+                HTTPRequest(
+                    httpMethod: HTTPRequest.HTTPMethod.get,
+                    endpoint: "/\(id)",
+                    headers: headers,
+                    parameters: parameters,
+                    requestInterceptors: requestInterceptors,
+                    responseInterceptors: responseInterceptors,
+                    base: self.baseRequest
+                )
+
+            switch self.transport.send(request: request) {
+                case .success(let response):
+                    if let error = self.verify(response: response) { return ServiceCallResult.failure(error: error) }
+
+                    do {
+                        let jsonObject: Any = try response.getJSON()!
+                        let payload = EntityParserSPECIAL().parse(jsonObject).first!
+                        return ServiceCallResult.success(payload: payload)
+                    } catch let error {
+                        return ServiceCallResult.failure(error: error as NSError)
+                    }
+
+                case .failure(let error):
+                    return ServiceCallResult.failure(error: error)
+            }
+        }
+    }
+
+    func getEntityWithInterceptors(entityId id: String) -> ServiceCall<Entity> {
+        return self.createCall() { () -> ServiceCallResult<Entity> in
+            var headers:    [String: String]        = [:]
+            var parameters: [HTTPRequestParameters] = []
+            var requestInterceptors: [HTTPRequestInterceptor] = []
+            var responseInterceptors: [HTTPResponseInterceptor] = []
+
+            requestInterceptors.append(EntityRequestInterceptorSPECIAL())
+
+            responseInterceptors.append(EntityResponseInterceptorSPECIAL())
+
+            let request: HTTPRequest =
+                HTTPRequest(
+                    httpMethod: HTTPRequest.HTTPMethod.get,
+                    endpoint: "/\(id)",
+                    headers: headers,
+                    parameters: parameters,
+                    requestInterceptors: requestInterceptors,
+                    responseInterceptors: responseInterceptors,
+                    base: self.baseRequest
+                )
+
+            switch self.transport.send(request: request) {
+                case .success(let response):
+                    if let error = self.verify(response: response) { return ServiceCallResult.failure(error: error) }
+
+                    do {
+                        let jsonObject: Any = try response.getJSON()!
+                        let payload = EntityParserSPECIAL().parse(jsonObject).first!
+                        return ServiceCallResult.success(payload: payload)
+                    } catch let error {
+                        return ServiceCallResult.failure(error: error as NSError)
+                    }
+
+                case .failure(let error):
+                    return ServiceCallResult.failure(error: error)
+            }
+        }
+    }
+
+}

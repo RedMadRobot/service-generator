@@ -1,0 +1,3 @@
+[submodule "Source/ServiceGenerator/ServiceGenerator/Library"]
+	path = Source/ServiceGenerator/ServiceGenerator/Library
+	url = git@git.redmadrobot.com:foundation-ios/ModelCompiler.git
