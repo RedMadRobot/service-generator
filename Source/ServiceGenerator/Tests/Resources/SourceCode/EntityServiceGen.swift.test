@@ -69,8 +69,8 @@ class EntityServiceGen: EntityService {
         return self.createAuthorizedCall() { () -> ServiceCallResult<[Entity]> in
             var headers:    [String: String]        = [:]
             var parameters: [HTTPRequestParameters] = []
-            var requestInterceptors: [HTTPRequestInterceptor] = []
-            var responseInterceptors: [HTTPResponseInterceptor] = []
+            let requestInterceptors:  [HTTPRequestInterceptor]  = []
+            let responseInterceptors: [HTTPResponseInterceptor] = []
 
             headers["X-Att-Deviceos"] = deviceOS
 
@@ -115,10 +115,10 @@ class EntityServiceGen: EntityService {
 
     func authorize(login: String, password: String) -> ServiceCall<Void> {
         return self.createCall() { () -> ServiceCallResult<Void> in
-            var headers:    [String: String]        = [:]
+            let headers:    [String: String]        = [:]
             var parameters: [HTTPRequestParameters] = []
-            var requestInterceptors: [HTTPRequestInterceptor] = []
-            var responseInterceptors: [HTTPResponseInterceptor] = []
+            let requestInterceptors:  [HTTPRequestInterceptor]  = []
+            let responseInterceptors: [HTTPResponseInterceptor] = []
 
             let jsonParameters: HTTPRequestParameters = HTTPRequestParameters(parameters: [:], encoding: HTTPRequestParameters.Encoding.json)
             jsonParameters["login"] = login
@@ -149,10 +149,10 @@ class EntityServiceGen: EntityService {
 
     func getEntity(entityId id: String) -> ServiceCall<Entity> {
         return self.createCall() { () -> ServiceCallResult<Entity> in
-            var headers:    [String: String]        = [:]
-            var parameters: [HTTPRequestParameters] = []
-            var requestInterceptors: [HTTPRequestInterceptor] = []
-            var responseInterceptors: [HTTPResponseInterceptor] = []
+            let headers:    [String: String]        = [:]
+            let parameters: [HTTPRequestParameters] = []
+            let requestInterceptors:  [HTTPRequestInterceptor]  = []
+            let responseInterceptors: [HTTPResponseInterceptor] = []
 
             let request: HTTPRequest =
                 HTTPRequest(
@@ -171,7 +171,7 @@ class EntityServiceGen: EntityService {
 
                     do {
                         let jsonObject: Any = try response.getJSON()!
-                        let payload = EntityParserSPECIAL().parse(jsonObject).first!
+                        guard let payload = EntityParserSPECIAL().parse(jsonObject).first else { throw NSError.noHTTPResponse }
                         return ServiceCallResult.success(payload: payload)
                     } catch let error {
                         return ServiceCallResult.failure(error: error as NSError)
@@ -185,9 +185,9 @@ class EntityServiceGen: EntityService {
 
     func getEntityWithInterceptors(entityId id: String) -> ServiceCall<Entity> {
         return self.createCall() { () -> ServiceCallResult<Entity> in
-            var headers:    [String: String]        = [:]
-            var parameters: [HTTPRequestParameters] = []
-            var requestInterceptors: [HTTPRequestInterceptor] = []
+            let headers:    [String: String]        = [:]
+            let parameters: [HTTPRequestParameters] = []
+            var requestInterceptors:  [HTTPRequestInterceptor]  = []
             var responseInterceptors: [HTTPResponseInterceptor] = []
 
             requestInterceptors.append(EntityRequestInterceptorSPECIAL())
@@ -211,7 +211,7 @@ class EntityServiceGen: EntityService {
 
                     do {
                         let jsonObject: Any = try response.getJSON()!
-                        let payload = EntityParserSPECIAL().parse(jsonObject).first!
+                        guard let payload = EntityParserSPECIAL().parse(jsonObject).first else { throw NSError.noHTTPResponse }
                         return ServiceCallResult.success(payload: payload)
                     } catch let error {
                         return ServiceCallResult.failure(error: error as NSError)
