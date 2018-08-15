@@ -47,6 +47,9 @@ class ServiceMethodSchemeFactory {
                   modelKlasses.contains(klassName: name) || name == "Void" {
             returnsCollection = false
             parserName = name + "Parser"
+        } else if returnObjectType == .StringType {
+            returnsCollection = false
+            parserName = ""
         } else if case Typê.ArrayType(let itemType) = returnObjectType {
             returnsCollection = true
 

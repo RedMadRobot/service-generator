@@ -185,6 +185,15 @@ private extension ServiceMethodCallComposer {
             return ""
                 .addLine("if let error = self.verify(response: response) { return ServiceCallResult.failure(error: error) }")
                 .addLine("return ServiceCallResult.success(payload: ())")
+        } else if methodScheme.returnedModelObjectTypeName == "String" {
+            return ""
+            .addLine("if let error = self.verify(response: response) { return ServiceCallResult.failure(error: error) }")
+            .addLine("if let data = response.body,")
+            .addLine("let string = String(data: data, encoding: .utf8) {".indent())
+            .addLine("return ServiceCallResult.success(payload: string)".indent())
+            .addLine("} else {")
+            .addLine("return ServiceCallResult.failure(error: NSError.noHTTPResponse)".indent())
+            .addLine("}")
         }
 
         let payloadDeclaration:    String
