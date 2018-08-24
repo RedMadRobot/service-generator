@@ -72,7 +72,18 @@ protocol EntityService {
 
      @get
      @url /some/string
+     @content string
      */
     func getString(
         ) -> ServiceCall<String>
+
+    /**
+     Get primitive Int
+
+     @get
+     @url /some/int
+     @content json
+     */
+    func getInt(
+        ) -> ServiceCall<Int>
 }

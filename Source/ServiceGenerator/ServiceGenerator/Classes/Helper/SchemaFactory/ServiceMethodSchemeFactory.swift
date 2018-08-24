@@ -47,9 +47,20 @@ class ServiceMethodSchemeFactory {
                   modelKlasses.contains(klassName: name) || name == "Void" {
             returnsCollection = false
             parserName = name + "Parser"
-        } else if returnObjectType == .StringType {
+        } else if returnObjectType.isPrimitive() {
             returnsCollection = false
-            parserName = ""
+            if let contentType = method.annotations["content"]?.value,
+               contentType == "string" {
+                if returnObjectType != .StringType {
+                    throw self.generateErrorMessage(
+                        message: "Content type and returned object type are not equal. " +
+                                 "Use `@content json` or change the type of the returned object to String",
+                        declaration: method.declaration)
+                }
+                parserName = ""
+            } else {
+                parserName = "SimpleValueJsonParser<\(returnObjectType.description)>"
+            }
         } else if case Typê.ArrayType(let itemType) = returnObjectType {
             returnsCollection = true
 

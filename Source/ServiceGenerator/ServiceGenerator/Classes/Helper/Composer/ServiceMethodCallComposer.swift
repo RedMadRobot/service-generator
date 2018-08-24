@@ -185,7 +185,7 @@ private extension ServiceMethodCallComposer {
             return ""
                 .addLine("if let error = self.verify(response: response) { return ServiceCallResult.failure(error: error) }")
                 .addLine("return ServiceCallResult.success(payload: ())")
-        } else if methodScheme.returnedModelObjectTypeName == "String" {
+        } else if methodScheme.returnedModelObjectTypeName == "String", methodScheme.parserName.isEmpty {
             return ""
             .addLine("if let error = self.verify(response: response) { return ServiceCallResult.failure(error: error) }")
             .addLine("if let data = response.body,")
