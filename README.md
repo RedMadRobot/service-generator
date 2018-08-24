@@ -117,6 +117,9 @@ query parameter with `NAME=`.
 `@requestInterceptor NAME`
 `HTTPRequestInterceptor` to add this method only.
 
+`@content [json|string]` used for specify type of parser for primitive return type. In case of option `string`, response body parsed as raw string. In case of option `json` (default) response body parsed as JSON and extract first value suitable for returned type.
+
+
 ### Example of EntityService
 
 Let's take a look at typical `EntityService` that obtain model type `Entity`.

@@ -223,4 +223,74 @@ class EntityServiceGen: EntityService {
         }
     }
 
+    func getString() -> ServiceCall<String> {
+        return self.createCall() { () -> ServiceCallResult<String> in
+            let headers:    [String: String]        = [:]
+            let parameters: [HTTPRequestParameters] = []
+            let requestInterceptors:  [HTTPRequestInterceptor]  = []
+            let responseInterceptors: [HTTPResponseInterceptor] = []
+
+            let request: HTTPRequest =
+                HTTPRequest(
+                    httpMethod: HTTPRequest.HTTPMethod.get,
+                    endpoint: "/some/string",
+                    headers: headers,
+                    parameters: parameters,
+                    requestInterceptors: requestInterceptors,
+                    responseInterceptors: responseInterceptors,
+                    base: self.baseRequest
+                )
+
+            switch self.transport.send(request: request) {
+                case .success(let response):
+                    if let error = self.verify(response: response) { return ServiceCallResult.failure(error: error) }
+                    if let data = response.body,
+                        let string = String(data: data, encoding: .utf8) {
+                        return ServiceCallResult.success(payload: string)
+                    } else {
+                        return ServiceCallResult.failure(error: NSError.noHTTPResponse)
+                    }
+
+                case .failure(let error):
+                    return ServiceCallResult.failure(error: error)
+            }
+        }
+    }
+
+    func getInt() -> ServiceCall<Int> {
+        return self.createCall() { () -> ServiceCallResult<Int> in
+            let headers:    [String: String]        = [:]
+            let parameters: [HTTPRequestParameters] = []
+            let requestInterceptors:  [HTTPRequestInterceptor]  = []
+            let responseInterceptors: [HTTPResponseInterceptor] = []
+
+            let request: HTTPRequest =
+                HTTPRequest(
+                    httpMethod: HTTPRequest.HTTPMethod.get,
+                    endpoint: "/some/int",
+                    headers: headers,
+                    parameters: parameters,
+                    requestInterceptors: requestInterceptors,
+                    responseInterceptors: responseInterceptors,
+                    base: self.baseRequest
+                )
+
+            switch self.transport.send(request: request) {
+                case .success(let response):
+                    if let error = self.verify(response: response) { return ServiceCallResult.failure(error: error) }
+
+                    do {
+                        let jsonObject: Any = try response.getJSON()!
+                        guard let payload = SimpleValueJsonParser<Int>().parse(jsonObject).first else { throw NSError.noHTTPResponse }
+                        return ServiceCallResult.success(payload: payload)
+                    } catch let error {
+                        return ServiceCallResult.failure(error: error as NSError)
+                    }
+
+                case .failure(let error):
+                    return ServiceCallResult.failure(error: error)
+            }
+        }
+    }
+
 }
